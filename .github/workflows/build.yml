@@ -1,4 +1,4 @@
-name: Build Steadfast with Forced Custom Icon
+name: Build Steadfast Adaptive Icon Fix
 
 on:
   push:
@@ -43,33 +43,32 @@ jobs:
           npx cap init Steadfast com.steadfast.app --web-dir www
           npx cap add android
 
-      - name: Force Overwrite Android Launcher Icons
+      - name: Force Overwrite Adaptive Android Icons
         run: |
           if [ -f "icon.png" ]; then
-            echo "Icon found! Forcing custom launcher icon replacement..."
-            
-            # Target mipmap directories
+            echo "Forcing adaptive launcher icon replacement..."
             RES_DIR="android/app/src/main/res"
-            
-            # Resize and replace ic_launcher.png and ic_launcher_round.png in all densities
+
+            # Replaces legacy icons
             convert icon.png -resize 48x48 $RES_DIR/mipmap-mdpi/ic_launcher.png
             convert icon.png -resize 48x48 $RES_DIR/mipmap-mdpi/ic_launcher_round.png
-            
             convert icon.png -resize 72x72 $RES_DIR/mipmap-hdpi/ic_launcher.png
             convert icon.png -resize 72x72 $RES_DIR/mipmap-hdpi/ic_launcher_round.png
-            
             convert icon.png -resize 96x96 $RES_DIR/mipmap-xhdpi/ic_launcher.png
             convert icon.png -resize 96x96 $RES_DIR/mipmap-xhdpi/ic_launcher_round.png
-            
             convert icon.png -resize 144x144 $RES_DIR/mipmap-xxhdpi/ic_launcher.png
             convert icon.png -resize 144x144 $RES_DIR/mipmap-xxhdpi/ic_launcher_round.png
-            
             convert icon.png -resize 192x192 $RES_DIR/mipmap-xxxhdpi/ic_launcher.png
             convert icon.png -resize 192x192 $RES_DIR/mipmap-xxxhdpi/ic_launcher_round.png
-            
-            echo "Icons replaced successfully."
-          else
-            echo "WARNING: icon.png was not found in the root directory!"
+
+            # Replaces Android Adaptive Foreground icons (Modern Android)
+            convert icon.png -resize 108x108 $RES_DIR/mipmap-mdpi/ic_launcher_foreground.png
+            convert icon.png -resize 162x162 $RES_DIR/mipmap-hdpi/ic_launcher_foreground.png
+            convert icon.png -resize 216x216 $RES_DIR/mipmap-xhdpi/ic_launcher_foreground.png
+            convert icon.png -resize 324x324 $RES_DIR/mipmap-xxhdpi/ic_launcher_foreground.png
+            convert icon.png -resize 432x432 $RES_DIR/mipmap-xxxhdpi/ic_launcher_foreground.png
+
+            echo "Adaptive icons forced!"
           fi
 
       - name: Sync Capacitor
