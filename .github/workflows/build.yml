@@ -16,7 +16,6 @@ jobs:
       - name: Extract Project ZIP
         run: |
           unzip -o *.zip || true
-          # Find package.json and bring everything to root
           PKG_PATH=$(find . -name "package.json" | head -n 1)
           if [ -n "$PKG_PATH" ]; then
             PKG_DIR=$(dirname "$PKG_PATH")
@@ -36,13 +35,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Add Android Platform (Generates Gradlew)
+      - name: Install Dependencies & Force Add Capacitor Android
         run: |
-          npx cap add android || true
-          npx cap sync android || true
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init Steadfast com.steadfast.app --web-dir www || true
+          npx cap add android
+          npx cap sync android
 
       - name: Build APK with Gradle
         run: |
