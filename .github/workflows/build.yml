@@ -1,4 +1,4 @@
-name: Rebuild Android and Build APK
+name: Build Native Steadfast APK
 
 on:
   push:
@@ -35,14 +35,23 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Clean & Re-generate Native Android Platform
+      - name: Re-generate Native Android Platform & Assets
         run: |
           rm -rf android
           npm install
+          npm run build || npm run generate || true
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init Steadfast com.steadfast.app --web-dir www || true
           npx cap add android
+          
+          # Sync assets and icons
+          npx cap copy android
           npx cap sync android
+
+          # Force restore custom app icon if resources directory exists
+          if [ -d "resources" ] || [ -d "assets" ]; then
+            npx @capacitor/assets generate --android || true
+          fi
 
       - name: Build APK with Gradle
         run: |
@@ -55,4 +64,3 @@ jobs:
         with:
           name: Steadfast-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
