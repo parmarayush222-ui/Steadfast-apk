@@ -1,4 +1,4 @@
-name: Unzip and Build APK
+name: Generate Android and Build APK
 
 on:
   push:
@@ -16,11 +16,13 @@ jobs:
       - name: Extract Project ZIP
         run: |
           unzip -o *.zip || true
-          # Find where the android folder is and bring everything to root
-          ANDROID_DIR=$(find . -maxdepth 3 -type d -name "android" | head -n 1)
-          if [ -n "$ANDROID_DIR" ] && [ "$ANDROID_DIR" != "./android" ]; then
-            PARENT_DIR=$(dirname "$ANDROID_DIR")
-            cp -r $PARENT_DIR/* .
+          # Find package.json and bring everything to root
+          PKG_PATH=$(find . -name "package.json" | head -n 1)
+          if [ -n "$PKG_PATH" ]; then
+            PKG_DIR=$(dirname "$PKG_PATH")
+            if [ "$PKG_DIR" != "." ]; then
+              cp -r $PKG_DIR/* .
+            fi
           fi
 
       - name: Set up Java 17
@@ -35,16 +37,12 @@ jobs:
           node-version: '20'
 
       - name: Install Dependencies
-        run: |
-          if [ -f "package.json" ]; then
-            npm install
-          fi
+        run: npm install
 
-      - name: Sync Capacitor
+      - name: Add Android Platform (Generates Gradlew)
         run: |
-          if [ -f "package.json" ]; then
-            npx cap sync android || true
-          fi
+          npx cap add android || true
+          npx cap sync android || true
 
       - name: Build APK with Gradle
         run: |
@@ -57,6 +55,4 @@ jobs:
         with:
           name: Steadfast-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
-          
           
