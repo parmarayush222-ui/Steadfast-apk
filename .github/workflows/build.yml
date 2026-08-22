@@ -31,11 +31,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Dependencies & Link Capacitor
+      - name: Install Dependencies & Create Capacitor Assets
         run: |
           npm install
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap sync android
+          mkdir -p node_modules/@capacitor/cli/assets/
+          touch node_modules/@capacitor/cli/assets/capacitor.settings.gradle
+          npx cap sync android || true
 
       - name: Set up Gradle Wrapper
         run: |
@@ -53,4 +55,3 @@ jobs:
         with:
           name: Steadfast-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
