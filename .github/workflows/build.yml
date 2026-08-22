@@ -1,4 +1,4 @@
-name: Build Real Steadfast App
+name: Build Steadfast Complete APK
 
 on:
   push:
@@ -31,20 +31,31 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Prepare Assets & Sync Capacitor
+      - name: Build Native Project & Inject Custom Java Files
         run: |
-          npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          mkdir -p android/app/src/main/assets
-          npx cap update android
+          # 1. Save custom native Java files and manifest/icons before cleaning
+          mkdir -p /tmp/native_backup
+          cp -r android/app/src/main/java /tmp/native_backup/ || true
+          cp -r android/app/src/main/res /tmp/native_backup/ || true
+          cp android/app/src/main/AndroidManifest.xml /tmp/native_backup/ || true
+
+          # 2. Fresh native setup to avoid broken Capacitor settings references
+          rm -rf android
+          npm install @capacitor/core@5 @capacitor/cli@5 @capacitor/android@5
+
+          # 3. Initialize and add Android
+          npx cap init Steadfast com.steadfast.app --web-dir www
+          npx cap add android
+
+          # 4. Restore original native Java files, custom icons, and Manifest
+          cp -r /tmp/native_backup/java/* android/app/src/main/java/ || true
+          cp -r /tmp/native_backup/res/* android/app/src/main/res/ || true
+          cp /tmp/native_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml || true
+
+          # 5. Final sync
           npx cap sync android
 
-      - name: Set up Gradle Wrapper
-        run: |
-          cd android
-          gradle wrapper
-
-      - name: Build APK
+      - name: Build APK with Gradle
         run: |
           cd android
           chmod +x gradlew
@@ -55,4 +66,3 @@ jobs:
         with:
           name: Steadfast-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
