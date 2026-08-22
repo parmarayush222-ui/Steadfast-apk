@@ -31,10 +31,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install & Sync Native Capacitor
+      - name: Prepare Assets & Sync Capacitor
         run: |
           npm install
           npm install @capacitor/core @capacitor/cli @capacitor/android
+          mkdir -p android/app/src/main/assets
           npx cap update android
           npx cap sync android
 
