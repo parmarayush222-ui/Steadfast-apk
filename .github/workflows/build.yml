@@ -1,4 +1,4 @@
-name: Build Steadfast Complete APK
+name: Build Steadfast with Custom Icon
 
 on:
   push:
@@ -31,28 +31,22 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build Native Project & Inject Custom Java Files
+      - name: Generate Custom Icons & Build Native Project
         run: |
-          # 1. Save custom native Java files and manifest/icons before cleaning
-          mkdir -p /tmp/native_backup
-          cp -r android/app/src/main/java /tmp/native_backup/ || true
-          cp -r android/app/src/main/res /tmp/native_backup/ || true
-          cp android/app/src/main/AndroidManifest.xml /tmp/native_backup/ || true
-
-          # 2. Fresh native setup to avoid broken Capacitor settings references
+          # 1. Clean up and install assets tool
+          npm install
+          npm install @capacitor/assets --save-dev
           rm -rf android
-          npm install @capacitor/core@5 @capacitor/cli@5 @capacitor/android@5
-
-          # 3. Initialize and add Android
+          
+          # 2. Fresh native setup (to ensure clean icon integration)
           npx cap init Steadfast com.steadfast.app --web-dir www
           npx cap add android
 
-          # 4. Restore original native Java files, custom icons, and Manifest
-          cp -r /tmp/native_backup/java/* android/app/src/main/java/ || true
-          cp -r /tmp/native_backup/res/* android/app/src/main/res/ || true
-          cp /tmp/native_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml || true
+          # 3. Generate Android launcher icons from the root icon.png
+          if [ -f "icon.png" ]; then
+            npx @capacitor/assets generate --android
+          fi
 
-          # 5. Final sync
           npx cap sync android
 
       - name: Build APK with Gradle
