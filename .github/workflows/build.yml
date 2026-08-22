@@ -1,4 +1,4 @@
-name: Build Steadfast with Custom Icon
+name: Build Steadfast with Forced Custom Icon
 
 on:
   push:
@@ -31,23 +31,49 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Generate Custom Icons & Build Native Project
+      - name: Install ImageMagick
+        run: sudo apt-get install -y imagemagick
+
+      - name: Build Android Base
         run: |
-          # 1. Clean up and install assets tool
           npm install
-          npm install @capacitor/assets --save-dev
+          npm install @capacitor/core@5 @capacitor/cli@5 @capacitor/android@5
+
           rm -rf android
-          
-          # 2. Fresh native setup (to ensure clean icon integration)
           npx cap init Steadfast com.steadfast.app --web-dir www
           npx cap add android
 
-          # 3. Generate Android launcher icons from the root icon.png
+      - name: Force Overwrite Android Launcher Icons
+        run: |
           if [ -f "icon.png" ]; then
-            npx @capacitor/assets generate --android
+            echo "Icon found! Forcing custom launcher icon replacement..."
+            
+            # Target mipmap directories
+            RES_DIR="android/app/src/main/res"
+            
+            # Resize and replace ic_launcher.png and ic_launcher_round.png in all densities
+            convert icon.png -resize 48x48 $RES_DIR/mipmap-mdpi/ic_launcher.png
+            convert icon.png -resize 48x48 $RES_DIR/mipmap-mdpi/ic_launcher_round.png
+            
+            convert icon.png -resize 72x72 $RES_DIR/mipmap-hdpi/ic_launcher.png
+            convert icon.png -resize 72x72 $RES_DIR/mipmap-hdpi/ic_launcher_round.png
+            
+            convert icon.png -resize 96x96 $RES_DIR/mipmap-xhdpi/ic_launcher.png
+            convert icon.png -resize 96x96 $RES_DIR/mipmap-xhdpi/ic_launcher_round.png
+            
+            convert icon.png -resize 144x144 $RES_DIR/mipmap-xxhdpi/ic_launcher.png
+            convert icon.png -resize 144x144 $RES_DIR/mipmap-xxhdpi/ic_launcher_round.png
+            
+            convert icon.png -resize 192x192 $RES_DIR/mipmap-xxxhdpi/ic_launcher.png
+            convert icon.png -resize 192x192 $RES_DIR/mipmap-xxxhdpi/ic_launcher_round.png
+            
+            echo "Icons replaced successfully."
+          else
+            echo "WARNING: icon.png was not found in the root directory!"
           fi
 
-          npx cap sync android
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Build APK with Gradle
         run: |
