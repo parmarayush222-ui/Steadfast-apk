@@ -1,4 +1,4 @@
-name: Build Native Steadfast APK
+name: Inspect and Build Original Android
 
 on:
   push:
@@ -13,54 +13,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Extract Project ZIP
+      - name: Extract Project ZIP & List Files
         run: |
           unzip -o *.zip || true
-          PKG_PATH=$(find . -name "package.json" | head -n 1)
-          if [ -n "$PKG_PATH" ]; then
-            PKG_DIR=$(dirname "$PKG_PATH")
-            if [ "$PKG_DIR" != "." ]; then
-              cp -r $PKG_DIR/* .
-            fi
-          fi
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Re-generate Native Android Platform & Assets
-        run: |
-          rm -rf android
-          npm install
-          npm run build || npm run generate || true
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init Steadfast com.steadfast.app --web-dir www || true
-          npx cap add android
-          
-          # Sync assets and icons
-          npx cap copy android
-          npx cap sync android
-
-          # Force restore custom app icon if resources directory exists
-          if [ -d "resources" ] || [ -d "assets" ]; then
-            npx @capacitor/assets generate --android || true
-          fi
-
-      - name: Build APK with Gradle
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Steadfast-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          echo "=== TOP LEVEL FILES ==="
+          ls -la
+          echo "=== SEARCHING ALL DIRECTORIES FOR GRADLEW ==="
+          find . -name "gradlew"
+          echo "=== SEARCHING FOR ANDROID DIRECTORY ==="
+          find . -maxdepth 3 -type d -name "android"
