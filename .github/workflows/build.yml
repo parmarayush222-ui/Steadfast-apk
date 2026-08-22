@@ -1,4 +1,4 @@
-name: Generate Android and Build APK
+name: Build Steadfast APK
 
 on:
   push:
@@ -16,11 +16,14 @@ jobs:
       - name: Extract Project ZIP
         run: |
           unzip -o *.zip || true
-          PKG_PATH=$(find . -name "package.json" | head -n 1)
-          if [ -n "$PKG_PATH" ]; then
-            PKG_DIR=$(dirname "$PKG_PATH")
-            if [ "$PKG_DIR" != "." ]; then
-              cp -r $PKG_DIR/* .
+          # Find where the android directory is located
+          ANDROID_PATH=$(find . -type d -name "android" | head -n 1)
+          if [ -n "$ANDROID_PATH" ]; then
+            echo "Found android directory at $ANDROID_PATH"
+            # If it's inside a subfolder, bring everything up to the main folder
+            PARENT_DIR=$(dirname "$ANDROID_PATH")
+            if [ "$PARENT_DIR" != "." ]; then
+              cp -r $PARENT_DIR/* .
             fi
           fi
 
@@ -35,16 +38,15 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Dependencies & Force Add Capacitor Android
-        run: |
-          npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init Steadfast com.steadfast.app --web-dir www || true
-          npx cap add android
-          npx cap sync android
+      - name: Install Dependencies
+        run: npm install || true
+
+      - name: Sync Capacitor
+        run: npx cap sync android || true
 
       - name: Build APK with Gradle
         run: |
+          # Go to the android directory and build
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
@@ -54,4 +56,3 @@ jobs:
         with:
           name: Steadfast-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
