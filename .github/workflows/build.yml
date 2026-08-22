@@ -1,4 +1,4 @@
-name: Inspect and Build Original Android
+name: Build Real Steadfast App
 
 on:
   push:
@@ -13,12 +13,34 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Extract Project ZIP & List Files
+      - name: Extract Project ZIP
         run: |
-          unzip -o *.zip || true
-          echo "=== TOP LEVEL FILES ==="
-          ls -la
-          echo "=== SEARCHING ALL DIRECTORIES FOR GRADLEW ==="
-          find . -name "gradlew"
-          echo "=== SEARCHING FOR ANDROID DIRECTORY ==="
-          find . -maxdepth 3 -type d -name "android"
+          unzip -o *.zip
+          # Move files from steadfast-android to root
+          if [ -d "steadfast-android" ]; then
+            cp -r steadfast-android/* .
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Gradle Wrapper
+        run: |
+          cd android
+          gradle wrapper
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Steadfast-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          
